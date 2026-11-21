@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoltVerde UG - Punto de Reciclaje Seguro</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+    body {
+      margin: 0; padding: 24px; background: #f3f6f4;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .barra-config {
+      max-width: 820px; width: 100%; background: #fff; border: 1px solid #cde0d5;
+      border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .barra-config input {
+      flex: 1; min-width: 220px; padding: 8px 12px; border: 1px solid #9ec2ae; border-radius: 6px;
+    }
+    .barra-config button {
+      background: #1b6b45; color: #fff; border: none; padding: 9px 14px;
+      border-radius: 6px; cursor: pointer; font-weight: 600;
+    }
+    .contenedor {
+      max-width: 820px; width: 100%;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 22px;
+    }
+    @media (max-width: 720px) { .contenedor { grid-template-columns: 1fr; } }
+
+    .tarjeta {
+      background: #ffffff; border: 3px solid #1b6b45; border-radius: 14px;
+      overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      display: flex; flex-direction: column;
+    }
+    .cabecera {
+      background: #1b6b45; color: #ffffff; text-align: center;
+      padding: 18px 12px; font-size: 24px; font-weight: 700;
+    }
+    .cuerpo { padding: 20px 22px; text-align: center; flex: 1; }
+    .subtitulo { font-size: 18px; font-weight: 700; color: #1a2e22; margin: 4px 0; }
+    .detalle { font-size: 13px; color: #4b5e53; margin-bottom: 16px; }
+    #qrcode {
+      display: inline-block; padding: 10px; background: #fff;
+      border: 1px solid #d5e5dc; border-radius: 8px; margin: 6px 0 10px;
+    }
+    .pie-qr { font-size: 12px; color: #6c7c73; margin-bottom: 14px; }
+    .alerta-roja { color: #c02626; font-weight: 700; font-size: 13.5px; margin: 6px 0; }
+    .regla { color: #36493e; font-size: 13px; margin: 5px 0; }
+
+    /* Formulario derecha */
+    .form-cuerpo { padding: 20px 22px; display: flex; flex-direction: column; gap: 11px; }
+    .campo {
+      width: 100%; padding: 11px 14px; border: 1.5px solid #9ec2ae;
+      border-radius: 8px; background: #e8f2ec; color: #1b3b29; font-size: 14px;
+    }
+    .campo::placeholder { color: #456854; }
+    .btn-enviar {
+      margin-top: 6px; align-self: center; background: #1b6b45; color: #fff;
+      border: none; padding: 11px 36px; border-radius: 8px; font-size: 15px;
+      font-weight: 700; cursor: pointer;
+    }
+    .btn-enviar:hover { background: #145335; }
+    #confirmacion {
+      display: none; margin-top: 10px; padding: 12px; border-radius: 8px;
+      background: #dff3e7; color: #145335; font-size: 13.5px; text-align: center;
+    }
+    @media print { .barra-config { display: none; } }
+  </style>
+</head>
+<body>
+
+  <div class="barra-config">
+    <strong>Enlace para el QR:</strong>
+    <input type="text" id="urlInput" placeholder="Pega aquí tu enlace web o de Google Form..." />
+    <button onclick="actualizarQR()">Actualizar QR</button>
+    <button onclick="window.print()" style="background:#2f4f3e;">Imprimir / PDF</button>
+  </div>
+
+  <div class="contenedor">
+    <!-- IZQUIERDA: CARTEL -->
+    <div class="tarjeta">
+      <div class="cabecera">VoltVerde UG</div>
+      <div class="cuerpo">
+        <div class="subtitulo">Punto de reciclaje seguro</div>
+        <div class="detalle">Celulares · Baterías · Cargadores · Cables</div>
+        <div id="qrcode"></div>
+        <div class="pie-qr">Escanea y regístrate</div>
+        <div class="alerta-roja">Baterías hinchadas: contenedor aparte</div>
+        <div class="regla">Cubre los terminales con cinta</div>
+        <div class="regla">Borra tus datos antes de entregar</div>
+      </div>
+    </div>
+
+    <!-- DERECHA: FORMULARIO -->
+    <div class="tarjeta">
+      <div class="cabecera">Registro de entrega</div>
+      <form class="form-cuerpo" id="formEntrega" onsubmit="registrar(event)">
+        <input class="campo" type="text" id="nombre" placeholder="Nombre (opcional)" />
+        <input class="campo" type="text" id="facultad" placeholder="Facultad / carrera" required />
+        <select class="campo" id="tipo" required>
+          <option value="" disabled selected>Tipo de equipo (celular, batería...)</option>
+          <option value="Celular">Celular</option>
+          <option value="Batería">Batería</option>
+          <option value="Cargador">Cargador</option>
+          <option value="Cables / accesorios">Cables / accesorios</option>
+          <option value="Laptop">Laptop</option>
+        </select>
+        <input class="campo" type="number" id="cantidad" min="1" placeholder="Cantidad" required />
+        <select class="campo" id="borroDatos" required>
+          <option value="" disabled selected>Borré mis datos: Sí / No</option>
+          <option value="Sí">Borré mis datos: Sí</option>
+          <option value="No">Borré mis datos: No</option>
+          <option value="No aplica">Borré mis datos: No aplica (cables/batería)</option>
+        </select>
+        <select class="campo" id="bateriaHinchada" required>
+          <option value="" disabled selected>Batería hinchada o rota: Sí / No</option>
+          <option value="No">Batería hinchada o rota: No</option>
+          <option value="Sí">Batería hinchada o rota: Sí (depositar aparte)</option>
+        </select>
+        <button class="btn-enviar" type="submit">Enviar</button>
+        <div id="confirmacion"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const urlInicial = window.location.href.startsWith('http')
+      ? window.location.href
+      : 'https://voltverde-ug.tiiny.site';
+
+    document.getElementById('urlInput').value = urlInicial;
+
+    function generarQR(texto) {
+      const contenedor = document.getElementById('qrcode');
+      contenedor.innerHTML = '';
+      new QRCode(contenedor, {
+        text: texto,
+        width: 145,
+        height: 145,
+        colorDark: '#163826',
+        colorLight: '#ffffff'
+      });
+    }
+
+    function actualizarQR() {
+      const val = document.getElementById('urlInput').value.trim();
+      if (val) generarQR(val);
+    }
+
+    function registrar(e) {
+      e.preventDefault();
+      const nombre = document.getElementById('nombre').value.trim() || 'Anónimo';
+      const tipo = document.getElementById('tipo').value;
+      const cant = document.getElementById('cantidad').value;
+      const hinchada = document.getElementById('bateriaHinchada').value;
+      const folio = 'VV-' + Math.floor(1000 + Math.random() * 9000);
+
+      const aviso = hinchada === 'Sí'
+        ? '<br><strong style="color:#c02626;">⚠️ Deposita el equipo en el contenedor rojo aparte.</strong>'
+        : '';
+
+      const box = document.getElementById('confirmacion');
+      box.style.display = 'block';
+      box.innerHTML = `✅ <strong>¡Entrega registrada!</strong> (Código: ${folio})<br>
+        Usuario: ${nombre} · ${cant}x ${tipo}${aviso}`;
+      e.target.reset();
+    }
+
+    generarQR(urlInicial);
+  </script>
+</body>
+</html>
